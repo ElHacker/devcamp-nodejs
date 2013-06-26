@@ -2,10 +2,21 @@ formidable = require 'formidable'
 http = require 'http'
 util = require 'util'
 port = 8000
+clients = []
 
-http.createServer( (req, res) ->
-  # handle request
-  if req.url == '/upload' and req.method.toLowerCase() == 'post'
+
+routeIndex = (req, res) ->
+  # show a file upload form
+  res.writeHead 200, 'content-type': 'text/html'
+  res.end(
+    '<form action="/upload" enctype="multipart/form-data" method="post">'+
+    '<input type="text" name="title"><br>'+
+    '<input type="file" name="upload" multiple="multiple"><br>'+
+    '<input type="submit" value="Upload">'+
+    '</form>'
+  )
+
+routeUpload = (req, res) ->
     # parse file and upload
     form = new formidable.IncomingForm()
 
@@ -17,6 +28,7 @@ http.createServer( (req, res) ->
         return
 
       part.on 'data', (data) ->
+        # Handle the data stream
         console.log data
 
       part.on 'end', () ->
@@ -32,16 +44,12 @@ http.createServer( (req, res) ->
       console.log files
       res.end util.inspect(fields: fields, files: files)
 
-    return
+http.createServer( (req, res) ->
+  # handle request
+  if req.url == '/upload' and req.method.toLowerCase() == 'post'
+    routeUpload req, res
+  else if req.url == '/' and req.method.toLowerCase() == 'get'
+    routeIndex req, res
 
-  # show a file upload form
-  res.writeHead 200, 'content-type': 'text/html'
-  res.end(
-    '<form action="/upload" enctype="multipart/form-data" method="post">'+
-    '<input type="text" name="title"><br>'+
-    '<input type="file" name="upload" multiple="multiple"><br>'+
-    '<input type="submit" value="Upload">'+
-    '</form>'
-  )
 ).listen(port)
 console.log "Server listening on port #{port}"
