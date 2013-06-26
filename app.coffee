@@ -9,6 +9,22 @@ http.createServer( (req, res) ->
     # parse file and upload
     form = new formidable.IncomingForm()
 
+    # Override the onPart method to access the multipart stream
+    form.onPart = (part) ->
+      if (!part.filename)
+        # let formidable handle all non-file parts
+        form.handlePart part
+        return
+
+      part.on 'data', (data) ->
+        console.log data
+
+      part.on 'end', () ->
+        console.log "file upload ended"
+
+      part.on 'error', (error) ->
+        console.log error
+
     form.parse req, (err, fields, files) ->
       res.writeHead 200, 'content-type': 'text/plain'
       res.write 'received upload:\n\n'
